@@ -1,0 +1,35 @@
+---
+- name: Start httpd service
+  service:
+    name: httpd
+    state: started
+    enabled: true
+
+- name: Create /srv/www/ folder
+  file:
+    path: "{{ apache.docroot }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 755
+    setype: httpd_sys_content_t
+
+- name: Copy Apache Conf template
+  template:
+    src: apache.conf.j2
+    dest: "/etc/httpd/conf.d/rha-demo.conf"
+
+- name: Copy index.html template
+  template:
+    src: index.html.j2
+    dest: "{{ apache.docroot }}/index.html"
+  notify: Restart httpd
+
+- meta: flush_handlers
+
+- name: Ensure http is responding with correct content
+  uri:
+    url: "http://localhost:{{ apache.http_port }}"
+    return_content: yes
+  register: http_output
+  failed_when: "'It works! on {{ ansible_date_time.hour }}:{{ ansible_date_time.minute }} {{ ansible_date_time.day }}-{{ ansible_date_time.month }}-{{ ansible_date_time.year }}' not in http_output.content"

@@ -1,0 +1,26 @@
+---
+
+- name: Fail when Service and Port is defined
+  fail:
+    msg: "Please set configure Service Name or Port. Both cannot be configured."
+  when:
+    - fwd_svc.name | type_debug != "NoneType"
+    - fwd_svc.port | type_debug != "NoneType"
+
+- name: Configure Service on FirewallD
+  firewalld:
+    service: "{{ fwd_svc.name }}"
+    state: "{{ fwd_svc.state }}"
+    permanent: "{{ fwd_svc.perm }}"
+    immediate: "{{ fwd_svc.now }}"
+  when:
+    - fwd_svc.port | type_debug == "NoneType"
+
+- name: Configure Port on FirewallD
+  firewalld:
+    port: "{{ fwd_svc.port }}"
+    state: "{{ fwd_svc.state }}"
+    permanent: "{{ fwd_svc.perm }}"
+    immediate: "{{ fwd_svc.now }}"
+  when:
+    - fwd_svc.name | type_debug == "NoneType"

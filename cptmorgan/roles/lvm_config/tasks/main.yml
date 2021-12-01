@@ -1,0 +1,51 @@
+---
+- name: Determine if sdb exists
+  stat:
+    path: "{{ storage.partitions.device }}"
+  register: disk_status
+
+- name: Fail if {{ storage.partitions.device }} not present
+  fail:
+    msg: "{{ storage.partitions.device }} is not present on Server"
+  when: disk_status.stat.exists == false
+
+- name: Configure apache-vg on /dev/sdb
+  block:
+    - name: Create Partition
+      parted:
+        device: "{{ storage.partitions.device }}"
+        state: "{{ storage.partitions.state }}"
+        number: "{{ storage.partitions.number }}"
+        part_start: "{{ storage.partitions.start }}"
+        part_end: "{{ storage.partitions.end }}"
+
+    - name: Create apache-vg Volume Group
+      lvg:
+        vg: "{{ storage.volume_groups.name }}"
+        pvs: "{{ storage.volume_groups.device }}"
+
+    - name: Create www-lv Logical Volume
+      lvol:
+        vg: "{{ storage.volume_groups.name }}"
+        lv: "{{ storage.logical_volumes.name }}"
+        size: "{{ storage.logical_volumes.size }}"
+
+    - name: Create Filesystems
+      filesystem:
+        dev: "/dev/{{ storage.volume_groups.name }}/{{ storage.logical_volumes.name }}"
+        fstype: "{{ storage.logical_volumes.fs }}"
+
+    - name: Create "{{ storage.logical_volumes.mount_path }}" directory
+      file:
+        path: "{{ storage.logical_volumes.mount_path }}"
+        state: directory
+        owner: root
+        group: root
+
+    - name: Mount logical volumes
+      mount:
+        path: "{{ storage.logical_volumes.mount_path }}"
+        src: "/dev/{{ storage.volume_groups.name }}/{{ storage.logical_volumes.name }}"
+        fstype: "{{ storage.logical_volumes.fs }}"
+        state: mounted
+  when: disk_status.stat.exists == true
