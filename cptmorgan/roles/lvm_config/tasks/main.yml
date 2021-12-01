@@ -4,6 +4,11 @@
     path: "{{ storage.partitions.device }}"
   register: disk_status
 
+- name: Fail if {{ storage.partitions.device }} not present
+  fail:
+    msg: "{{ storage.partitions.device }} is not present on Server"
+  when: disk_status.stat.exists == false
+
 - name: Configure apache-vg on /dev/sdb
   block:
     - name: Create Partition
