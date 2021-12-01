@@ -1,0 +1,11 @@
+---
+- name: Gather Package Facts
+  ansible.builtin.package_facts:
+    manager: auto
+
+- name: Install Packages
+  package:
+    name: "{{ item }}"
+    state: "{{ pkgs.state }}"
+  when: 'item|string not in ansible_facts.packages'
+  loop: "{{ pkgs.name }}"

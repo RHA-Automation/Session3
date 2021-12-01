@@ -1,0 +1,9 @@
+---
+- hosts: servers
+  gather_facts: yes
+
+  roles:
+    - pkg_inst
+    - lvm_config
+    - fw_config
+    - httpd_config

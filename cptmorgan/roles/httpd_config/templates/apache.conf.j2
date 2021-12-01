@@ -1,0 +1,10 @@
+Listen {{ apache.http_port }}
+
+<VirtualHost *:{{ apache.http_port }}>
+
+  DocumentRoot "{{ apache.docroot }}"
+  <Directory "{{ apache.docroot }}">
+     Require all granted
+  </Directory>
+
+</VirtualHost>
